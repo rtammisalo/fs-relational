@@ -1,11 +1,10 @@
 const express = require('express')
-const Blog = require('../models/Blog')
+const { Blog } = require('../models')
 const router = express.Router()
 
 // GET, list all blogs
 router.get('/', async (req, res) => {
   const blogs = await Blog.findAll()
-
   res.json(blogs)
 })
 
