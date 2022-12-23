@@ -11,13 +11,8 @@ router.get('/', async (req, res) => {
 // POST, create a new blog
 router.post('/', async (req, res) => {
   const blog = Blog.build(req.body)
-
-  try {
-    await blog.save()
-    res.json(blog)
-  } catch (error) {
-    res.status(400).end()
-  }
+  await blog.save()
+  res.json(blog)
 })
 
 // BlogFinder middleware for single blog searches by id.
@@ -27,38 +22,50 @@ const blogFinder = async (req, res, next) => {
 }
 
 // GET, return blog details by id
-router.get('/:id', blogFinder, async (req, res) => {
+router.get('/:id', blogFinder, async (req, res, next) => {
   if (req.blog) {
     res.json(req.blog)
   } else {
-    res.status(404).end()
+    next(new ReferenceError(`No blog data available for id ${req.params.id}.`))
   }
 })
 
 // PUT, update blog likes by id
-router.put('/:id', blogFinder, async (req, res) => {
+router.put('/:id', blogFinder, async (req, res, next) => {
   if (req.blog) {
     if (Number.isInteger(req.body.likes)) {
       req.blog.likes = req.body.likes
       await req.blog.save()
       res.json(req.blog)
     } else {
-      res.status(400).end()
+      next(
+        new TypeError(
+          'Request body data does not contain correctly formatted "likes".'
+        )
+      )
     }
   } else {
-    res.status(404).end()
+    next(
+      new ReferenceError(
+        `Cannot update likes for non-existing blog with id ${req.params.id}.`
+      )
+    )
   }
 })
 
 // DELETE, delete a blog by id
-router.delete('/:id', blogFinder, async (req, res) => {
+router.delete('/:id', blogFinder, async (req, res, next) => {
   const blog = req.blog
 
   if (blog) {
     await blog.destroy()
     res.json(blog)
   } else {
-    res.status(404).end()
+    next(
+      new ReferenceError(
+        `Cannot delete non-existing blog with id ${req.params.id}.`
+      )
+    )
   }
 })
 

@@ -1,16 +1,7 @@
-const express = require('express')
-const cors = require('cors')
-const app = express()
+const app = require('./app')
 
 const { PORT } = require('./utils/config')
 const { connectToDatabase } = require('./utils/db')
-
-const blogsRouter = require('./routes/blogs')
-
-app.use(cors())
-app.use(express.json())
-
-app.use('/api/blogs', blogsRouter)
 
 const start = async () => {
   await connectToDatabase()
