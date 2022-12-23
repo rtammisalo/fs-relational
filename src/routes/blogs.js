@@ -20,9 +20,39 @@ router.post('/', async (req, res) => {
   }
 })
 
-// DELETE, delete a blog
-router.delete('/:id', async (req, res) => {
-  const blog = await Blog.findByPk(req.params.id)
+// BlogFinder middleware for single blog searches by id.
+const blogFinder = async (req, res, next) => {
+  req.blog = await Blog.findByPk(req.params.id)
+  next()
+}
+
+// GET, return blog details by id
+router.get('/:id', blogFinder, async (req, res) => {
+  if (req.blog) {
+    res.json(req.blog)
+  } else {
+    res.status(404).end()
+  }
+})
+
+// PUT, update blog likes by id
+router.put('/:id', blogFinder, async (req, res) => {
+  if (req.blog) {
+    if (Number.isInteger(req.body.likes)) {
+      req.blog.likes = req.body.likes
+      await req.blog.save()
+      res.json(req.blog)
+    } else {
+      res.status(400).end()
+    }
+  } else {
+    res.status(404).end()
+  }
+})
+
+// DELETE, delete a blog by id
+router.delete('/:id', blogFinder, async (req, res) => {
+  const blog = req.blog
 
   if (blog) {
     await blog.destroy()
