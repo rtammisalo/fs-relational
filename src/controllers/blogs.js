@@ -6,11 +6,22 @@ const router = express.Router()
 
 // GET, list all blogs
 router.get('/', async (req, res) => {
-  const where = {}
+  let where = {}
 
   if (req.query.search) {
-    where.title = {
+    const query = {
       [Op.iLike]: `%${req.query.search}%`,
+    }
+
+    where = {
+      [Op.or]: [
+        {
+          title: query,
+        },
+        {
+          author: query,
+        },
+      ],
     }
   }
 
