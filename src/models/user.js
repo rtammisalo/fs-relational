@@ -15,12 +15,16 @@ User.init(
       type: DataTypes.STRING,
       unique: true,
       allowNull: false,
-      notEmpty: true,
+      validate: {
+        notEmpty: true,
+      },
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      notEmpty: true,
+      validate: {
+        notEmpty: true,
+      },
     },
   },
   {
