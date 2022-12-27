@@ -8,7 +8,7 @@ const errorHandler = (error, req, res, next) => {
     error.name === 'SequelizeValidationError' ||
     error.name === 'SequelizeUniqueConstraintError'
   ) {
-    res.status(400).end()
+    res.status(400).json({ error: error.message.split('\n') })
   } else if (error.name === 'ReferenceError') {
     res.status(404).end()
   } else if (
