@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const { SECRET } = require('../utils/config')
 
 class AuthorizationError {
-  static name = 'AuthorizationError'
+  name = 'AuthorizationError'
   constructor(message) {
     this.message = message
   }
@@ -19,4 +19,4 @@ const tokenExtractor = (req, res, next) => {
   next()
 }
 
-module.exports = tokenExtractor
+module.exports = { AuthorizationError, tokenExtractor }

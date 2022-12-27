@@ -1,4 +1,4 @@
 const errorHandler = require('./errorhandler')
-const tokenExtractor = require('./tokenextractor')
+const { AuthorizationError, tokenExtractor } = require('./tokenextractor')
 
-module.exports = { errorHandler, tokenExtractor }
+module.exports = { errorHandler, tokenExtractor, AuthorizationError }

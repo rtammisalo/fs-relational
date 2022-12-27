@@ -1,6 +1,6 @@
 const express = require('express')
 const { Blog, User } = require('../models')
-const { tokenExtractor } = require('../middleware')
+const { tokenExtractor, AuthorizationError } = require('../middleware')
 const router = express.Router()
 
 // GET, list all blogs
@@ -27,7 +27,6 @@ router.post('/', tokenExtractor, async (req, res) => {
 const blogFinder = async (req, res, next) => {
   req.blog = await Blog.findOne({
     where: { id: req.params.id },
-    attributes: { exclude: ['userId'] },
     include: {
       model: User,
       attributes: ['name'],
@@ -69,12 +68,16 @@ router.put('/:id', blogFinder, async (req, res, next) => {
 })
 
 // DELETE, delete a blog by id
-router.delete('/:id', blogFinder, async (req, res, next) => {
+router.delete('/:id', tokenExtractor, blogFinder, async (req, res, next) => {
   const blog = req.blog
 
   if (blog) {
-    await blog.destroy()
-    res.json(blog)
+    if (req.decodedToken.id === blog.userId) {
+      await blog.destroy()
+      res.json(blog)
+    } else {
+      next(new AuthorizationError('Unauthorized blog deletion'))
+    }
   } else {
     next(
       new ReferenceError(
