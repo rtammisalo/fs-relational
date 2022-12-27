@@ -1,23 +1,38 @@
 const express = require('express')
-const { Blog } = require('../models')
+const { Blog, User } = require('../models')
+const { tokenExtractor } = require('../middleware')
 const router = express.Router()
 
 // GET, list all blogs
 router.get('/', async (req, res) => {
-  const blogs = await Blog.findAll()
+  const blogs = await Blog.findAll({
+    attributes: { exclude: ['userId'] },
+    include: {
+      model: User,
+      attributes: ['name'],
+    },
+  })
   res.json(blogs)
 })
 
 // POST, create a new blog
-router.post('/', async (req, res) => {
-  const blog = Blog.build(req.body)
+router.post('/', tokenExtractor, async (req, res) => {
+  const user = await User.findByPk(req.decodedToken.id)
+  const blog = Blog.build({ ...req.body, userId: user.id })
   await blog.save()
   res.json(blog)
 })
 
 // BlogFinder middleware for single blog searches by id.
 const blogFinder = async (req, res, next) => {
-  req.blog = await Blog.findByPk(req.params.id)
+  req.blog = await Blog.findOne({
+    where: { id: req.params.id },
+    attributes: { exclude: ['userId'] },
+    include: {
+      model: User,
+      attributes: ['name'],
+    },
+  })
   next()
 }
 

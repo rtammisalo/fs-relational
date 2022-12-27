@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken')
 const router = require('express').Router()
 const { User } = require('../models')
 
@@ -22,30 +21,9 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
-const getTokenFrom = (request) => {
-  const authorization = request.get('authorization')
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    return authorization.substring(7)
-  }
-  return null
-}
-
-class AuthorizationError {
-  static name = 'AuthorizationError'
-  constructor(message) {
-    this.message = message
-  }
-}
-
 router.put('/:username', async (req, res, next) => {
   const username = req.params.username
   const new_username = req.body.username
-  const token = getTokenFrom(req)
-
-  if (!jwt.verify(token, process.env.SECRET)) {
-    next(new AuthorizationError('invalid token'))
-    return
-  }
 
   const user = await User.findOne({
     where: {

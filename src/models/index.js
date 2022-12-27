@@ -1,8 +1,9 @@
 const Blog = require('./blog')
 const User = require('./user')
 
-Blog.sync()
+Blog.belongsTo(User)
 User.sync()
+Blog.sync()
 
 module.exports = {
   Blog,
