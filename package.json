@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "nodemon ./src/index.js",
+    "dev": "nodemon ./src/index.js",
     "migration:down": "node ./src/utils/rollback.js"
   },
   "dependencies": {
