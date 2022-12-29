@@ -1,6 +1,7 @@
 const router = require('express').Router()
-const { User, Blog } = require('../models')
+const { User, Blog, Reading } = require('../models')
 
+// GET, return list of all users
 router.get('/', async (req, res) => {
   const users = await User.findAll({
     include: {
@@ -11,18 +12,31 @@ router.get('/', async (req, res) => {
   res.json(users)
 })
 
+// POST, add user
 router.post('/', async (req, res) => {
   const user = await User.create(req.body)
   res.json(user)
 })
 
+// GET, return an individual user
 router.get('/:id', async (req, res, next) => {
   const user = await User.findOne({
     where: { id: req.params.id },
-    include: {
-      model: Blog,
-      attributes: { exclude: ['userId'] },
-    },
+    include: [
+      {
+        model: Blog,
+        attributes: { exclude: ['userId'] },
+      },
+      {
+        model: Blog,
+        as: 'readings',
+        attributes: { exclude: ['userId'] },
+        through: {
+          as: 'readinglists',
+          attributes: ['id', 'read'],
+        },
+      },
+    ],
   })
 
   if (user) {
@@ -32,6 +46,7 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
+// PUT, update username of user
 router.put('/:username', async (req, res, next) => {
   const username = req.params.username
   const new_username = req.body.username
