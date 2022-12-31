@@ -1,7 +1,8 @@
 const express = require('express')
 const { Op } = require('sequelize')
 const { Blog, User } = require('../models')
-const { tokenExtractor, AuthorizationError } = require('../middleware')
+const { sessionChecker } = require('../middleware')
+const { AuthorizationError } = require('../utils/errors')
 const router = express.Router()
 
 // GET, list all blogs
@@ -39,9 +40,8 @@ router.get('/', async (req, res) => {
 })
 
 // POST, create a new blog
-router.post('/', tokenExtractor, async (req, res) => {
-  const user = await User.findByPk(req.decodedToken.id)
-  const blog = Blog.build({ ...req.body, userId: user.id })
+router.post('/', sessionChecker, async (req, res) => {
+  const blog = Blog.build({ ...req.body, userId: req.user.id })
   await blog.save()
   res.json(blog)
 })
@@ -68,8 +68,13 @@ router.get('/:id', blogFinder, async (req, res, next) => {
 })
 
 // PUT, update blog likes by id
-router.put('/:id', blogFinder, async (req, res, next) => {
+router.put('/:id', sessionChecker, blogFinder, async (req, res, next) => {
   if (req.blog) {
+    if (req.user.id !== req.blog.userId) {
+      throw new AuthorizationError(
+        'cannot update the likes of a blog added by others'
+      )
+    }
     if (Number.isInteger(req.body.likes)) {
       req.blog.likes = req.body.likes
       await req.blog.save()
@@ -91,11 +96,11 @@ router.put('/:id', blogFinder, async (req, res, next) => {
 })
 
 // DELETE, delete a blog by id
-router.delete('/:id', tokenExtractor, blogFinder, async (req, res, next) => {
+router.delete('/:id', sessionChecker, blogFinder, async (req, res, next) => {
   const blog = req.blog
 
   if (blog) {
-    if (req.decodedToken.id === blog.userId) {
+    if (req.user.id === blog.userId) {
       await blog.destroy()
       res.json(blog)
     } else {

@@ -1,6 +1,7 @@
 const express = require('express')
-const { Reading, UserReading } = require('../models')
-const { tokenExtractor, AuthorizationError } = require('../middleware')
+const { Reading } = require('../models')
+const { sessionChecker } = require('../middleware')
+const { AuthorizationError } = require('../utils/errors')
 const router = express.Router()
 
 const checkUserPrivilege = (token, resourceUserId) => {
@@ -10,7 +11,7 @@ const checkUserPrivilege = (token, resourceUserId) => {
 }
 
 // POST, add a new reading
-router.post('/', tokenExtractor, async (req, res) => {
+router.post('/', sessionChecker, async (req, res) => {
   checkUserPrivilege(req.decodedToken, req.body.userId)
 
   const reading = Reading.build({
@@ -23,8 +24,12 @@ router.post('/', tokenExtractor, async (req, res) => {
 })
 
 // PUT, change read status
-router.put('/:id', tokenExtractor, async (req, res) => {
+router.put('/:id', sessionChecker, async (req, res) => {
   const reading = await Reading.findByPk(req.params.id)
+
+  if (!reading) {
+    throw new ReferenceError('no such reading listing')
+  }
 
   checkUserPrivilege(req.decodedToken, reading.userId)
 

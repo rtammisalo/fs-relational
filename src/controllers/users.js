@@ -1,6 +1,8 @@
 const router = require('express').Router()
-const { User, Blog, Reading } = require('../models')
+const { User, Blog } = require('../models')
 const { Op } = require('sequelize')
+const { sessionChecker } = require('../middleware')
+const { AuthorizationError } = require('../utils/errors')
 
 // GET, return list of all users
 router.get('/', async (req, res) => {
@@ -57,24 +59,21 @@ router.get('/:id', async (req, res, next) => {
 })
 
 // PUT, update username of user
-router.put('/:username', async (req, res, next) => {
+router.put('/:username', sessionChecker, async (req, res, next) => {
   const username = req.params.username
   const new_username = req.body.username
 
-  const user = await User.findOne({
-    where: {
-      username: username,
-    },
-  })
-
-  if (!user) {
-    next(new ReferenceError(`Username ${username} not found.`))
-    return
+  if (username !== req.user.username) {
+    throw new AuthorizationError('unauthorized username change')
   }
 
-  user.username = new_username
-  await user.save()
-  res.json(user)
+  req.user.username = new_username
+  await req.user.save()
+
+  res.status(200).json({
+    old_username: username,
+    new_username,
+  })
 })
 
 module.exports = router
